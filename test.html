@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>test</title>
+<script src="raphael-min.js"></script>
+<script>
+window.onload = function(){
+	var dragger = function () {
+		this.ox = this.type == "rect" ? this.attr("x") : this.attr("cx");
+		this.oy = this.type == "rect" ? this.attr("y") : this.attr("cy");
+		this.animate({"fill-opacity": .2}, 200);
+	},
+	move = function (dx, dy) {
+	    this.toFront();
+		var att = this.type == "rect" ? {x: this.ox + dx, y: this.oy + dy} : {cx: this.ox + dx, cy: this.oy + dy};
+		this.attr(att);
+		for (var i = connections.length; i--;) {
+			r.connection(connections[i]);
+		}
+		r.safari();
+	},
+	up = function () {
+		this.animate({"fill-opacity": 1}, 200);
+	};
+	
+	var paper = Raphael(10, 50, 800, 400);
+	var circle = paper.rect(40,40,100,100,10);
+	
+	circle.attr("fill", "#f00").attr("stroke", "#000").attr("stroke-width", 3).drag(move,dragger,up);
+	circle.clone().drag(move,dragger, up);
+};
+</script>
+</head>
+<body>
+<div id="canvas">
+</div>
+</body>
+</html>
