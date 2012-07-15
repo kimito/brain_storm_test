@@ -5,7 +5,7 @@
 <title>test</title>
 <script src="raphael-min.js"></script>
 <script>
-window.onload = function(){
+Raphael.fn.newIdea = function(parent){
 	var dragger = function () {
 		this.ox = this.type == "rect" ? this.attr("x") : this.attr("cx");
 		this.oy = this.type == "rect" ? this.attr("y") : this.attr("cy");
@@ -20,22 +20,59 @@ window.onload = function(){
 		att = this.type == "rect" ? {x: this.mainBody.ox + dx, y: this.mainBody.oy + dy} : {cx: this.mainBody.ox + dx, cy: this.mainBody.oy + dy};
 		this.mainBody.attr(att);
 		
+		if(this.parent){
+		  var bbIdea = this.anIdea.getBBox(), bbParent = this.parent.getBBox();
+		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2},
+		  centerParent = {x:bbParent.x+bbParent.width/2, y:bbParent.y+bbParent.height/2};
+		  var linePath = ["M", centerParent.x, centerParent.y, "L", centerIdea.x, centerIdea.y].join(',');
+		  this.parentLine.attr({path:linePath});
+		}
+
 		this.toFront();
 		this.mainBody.toFront();
-		r.safari();
+		
+		this.paper.safari();
 	},
 	up = function () {
 		this.animate({"fill-opacity": .2}, 100);
 	};
 	
-	var paper = Raphael(10, 50, 800, 400);
-	var anIdea = paper.set();
-		
-	var ideaBar = paper.rect(40,40,200,20,0).attr("fill-opacity",.2).attr("fill", "#f00").attr("stroke", "#000").attr("stroke-width", 3).drag(move,dragger,up);
-	var ideaMain = paper.rect(40,60,200,100,0).attr("fill", "#fff").attr("stroke", "#000").attr("stroke-width", 3);
-	ideaBar.mainBody = ideaMain;
+	var anIdea = this.set();
 	
-	anIdea.push( ideaBar, ideaMain );	
+	var startPoint = {x:40, y:40};
+	if(parent){
+	  var bbParent = parent.getBBox();
+	  startPoint.x += bbParent.x + bbParent.width + 10;
+	}
+		
+	var ideaBar = this.rect(startPoint.x,startPoint.y,200,20,0).attr("fill-opacity",.2).attr("fill", "#f00").attr("stroke", "#000").attr("stroke-width", 3).drag(move,dragger,up);
+	var ideaMain = this.rect(startPoint.x,startPoint.y+20,200,100,0).attr("fill", "#fff").attr("stroke", "#000").attr("stroke-width", 3);
+	ideaBar.mainBody = ideaMain;
+
+	anIdea.push( ideaBar, ideaMain );
+	
+	if(parent){
+	  var bbIdea = anIdea.getBBox(), bbParent = parent.getBBox();
+	  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2},
+	    centerParent = {x:bbParent.x+bbParent.width/2, y:bbParent.y+bbParent.height/2};
+	  var path = ["M", centerParent.x, centerParent.y, "L", centerIdea.x, centerIdea.y].join(',');
+	  var line = this.path(path).attr({stroke: "#000", fill: "none", "stroke-width": 3}).toBack();
+	  
+	  parent.childrenLine = line;
+	  ideaBar.parentLine = line;
+	  ideaBar.parent = parent;
+	}
+	
+	ideaBar.anIdea = anIdea;
+	
+	return anIdea;
+};
+
+window.onload = function(){
+	var paper = Raphael(10, 50, 800, 400);
+	
+	var firstE = paper.newIdea();
+	paper.newIdea(firstE);
 };
 </script>
 </head>
