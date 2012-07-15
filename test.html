@@ -20,13 +20,26 @@ Raphael.fn.newIdea = function(parent){
 		att = this.type == "rect" ? {x: this.mainBody.ox + dx, y: this.mainBody.oy + dy} : {cx: this.mainBody.ox + dx, cy: this.mainBody.oy + dy};
 		this.mainBody.attr(att);
 		
-		if(this.parent){
-		  var bbIdea = this.anIdea.getBBox(), bbParent = this.parent.getBBox();
-		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2},
-		  centerParent = {x:bbParent.x+bbParent.width/2, y:bbParent.y+bbParent.height/2};
-		  var linePath = ["M", centerParent.x, centerParent.y, "L", centerIdea.x, centerIdea.y].join(',');
-		  this.parentLine.attr({path:linePath});
+		if(this.parentLine){
+		  var bbIdea = this.anIdea.getBBox();
+		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2};
+		  var linePath = this.parentLine.attr("path").toString().split(/[L,]/);
+		  linePath[2] = centerIdea.x;
+		  linePath[3] = centerIdea.y;
+		  var newLinePath = [linePath[0],linePath[1],'L',linePath[2],linePath[3]].join(',');
+		  this.parentLine.attr({path:newLinePath}).toBack();
 		}
+		
+	    if(this.anIdea.childrenLine){
+	      var bbIdea = this.anIdea.getBBox();
+		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2};
+		  var linePath = this.anIdea.childrenLine.attr("path").toString().split(/[ML,]/);
+		  linePath[0] = 'M';
+		  linePath[1] = centerIdea.x;
+		  linePath[2] = centerIdea.y;
+		  var newLinePath = [linePath[0],linePath[1],linePath[2],'L',linePath[3],linePath[4]].join(',');
+		  this.anIdea.childrenLine.attr({path:newLinePath}).toBack();
+	    }
 
 		this.toFront();
 		this.mainBody.toFront();
@@ -60,7 +73,6 @@ Raphael.fn.newIdea = function(parent){
 	  
 	  parent.childrenLine = line;
 	  ideaBar.parentLine = line;
-	  ideaBar.parent = parent;
 	}
 	
 	ideaBar.anIdea = anIdea;
@@ -72,7 +84,8 @@ window.onload = function(){
 	var paper = Raphael(10, 50, 800, 400);
 	
 	var firstE = paper.newIdea();
-	paper.newIdea(firstE);
+	var secondE = paper.newIdea(firstE);
+	paper.newIdea(secondE);
 };
 </script>
 </head>
