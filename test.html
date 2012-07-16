@@ -61,7 +61,7 @@ Raphael.fn.newIdea = function(parent){
 	var anIdea = this.set();
 	
 	var startPoint = {x:40, y:40};
-	//if there is a parent in this idea, added some offset to position
+	//if there is a parent in this idea, add some offset to position
 	if(parent){
 	  var bbParent = parent.getBBox();
 	  startPoint.x += bbParent.x + bbParent.width + 10;
@@ -72,9 +72,12 @@ Raphael.fn.newIdea = function(parent){
 	  .drag(move,dragger,up);
 	var ideaMain = this.rect(startPoint.x,startPoint.y+20,200,50,0)
 	  .attr({"fill":"#fff", "stroke":"#000", "stroke-width":3});
+	var addIdea = this.rect(startPoint.x+180, startPoint.y, 20, 20, 0)
+	  .attr({"fill":"#c88", "stroke-width":3});
+	
 	ideaBar.mainBody = ideaMain;
-
-	anIdea.push( ideaBar, ideaMain );
+	ideaBar.addIdea = addIdea;
+	anIdea.push( ideaBar, ideaMain, addIdea);
 	
 	//if there is a parent, add a line to a parent
 	if(parent){
