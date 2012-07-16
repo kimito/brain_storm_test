@@ -12,7 +12,7 @@ Raphael.fn.newIdea = function(parent){
 		this.mainBody.ox = this.type == "rect" ? this.mainBody.attr("x") : this.mainBody.attr("cx");
 		this.mainBody.oy = this.type == "rect" ? this.mainBody.attr("y") : this.mainBody.attr("cy");
 
-		this.animate({"fill-opacity": 1}, 100);
+		this.animate({"fill-opacity": .5}, 100);
 	},
 	move = function (dx, dy) {
 		var att = this.type == "rect" ? {x: this.ox + dx, y: this.oy + dy} : {cx: this.ox + dx, cy: this.oy + dy};
@@ -20,26 +20,34 @@ Raphael.fn.newIdea = function(parent){
 		att = this.type == "rect" ? {x: this.mainBody.ox + dx, y: this.mainBody.oy + dy} : {cx: this.mainBody.ox + dx, cy: this.mainBody.oy + dy};
 		this.mainBody.attr(att);
 		
+		//if there is a parent in this idea, move a line to a parent
 		if(this.parentLine){
+		  var line = this.parentLine;
+		  
 		  var bbIdea = this.anIdea.getBBox();
 		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2};
-		  var linePath = this.parentLine.attr("path").toString().split(/[L,]/);
+		  var linePath = line.attr("path").toString().split(/[L,]/);
 		  linePath[2] = centerIdea.x;
 		  linePath[3] = centerIdea.y;
 		  var newLinePath = [linePath[0],linePath[1],'L',linePath[2],linePath[3]].join(',');
-		  this.parentLine.attr({path:newLinePath}).toBack();
+		  line.attr({path:newLinePath}).toBack();
 		}
 		
-	    if(this.anIdea.childrenLine){
-	      var bbIdea = this.anIdea.getBBox();
-		  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2};
-		  var linePath = this.anIdea.childrenLine.attr("path").toString().split(/[ML,]/);
-		  linePath[0] = 'M';
-		  linePath[1] = centerIdea.x;
-		  linePath[2] = centerIdea.y;
-		  var newLinePath = [linePath[0],linePath[1],linePath[2],'L',linePath[3],linePath[4]].join(',');
-		  this.anIdea.childrenLine.attr({path:newLinePath}).toBack();
-	    }
+		//if there are some children in this idea, move lines to children
+		if(this.anIdea.childrenLines){
+		  for(i=0; i<this.anIdea.childrenLines.length; ++i){
+			  var line = this.anIdea.childrenLines[i];
+			  
+			  var bbIdea = this.anIdea.getBBox();
+			  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2};
+			  var linePath = line.attr("path").toString().split(/[ML,]/);
+			  linePath[0] = 'M';
+			  linePath[1] = centerIdea.x;
+			  linePath[2] = centerIdea.y;
+			  var newLinePath = [linePath[0],linePath[1],linePath[2],'L',linePath[3],linePath[4]].join(',');
+			  line.attr({path:newLinePath}).toBack();
+		  }
+		}
 
 		this.toFront();
 		this.mainBody.toFront();
@@ -47,31 +55,41 @@ Raphael.fn.newIdea = function(parent){
 		this.paper.safari();
 	},
 	up = function () {
-		this.animate({"fill-opacity": .2}, 100);
+		this.animate({"fill-opacity": 1}, 100);
 	};
 	
 	var anIdea = this.set();
 	
 	var startPoint = {x:40, y:40};
+	//if there is a parent in this idea, added some offset to position
 	if(parent){
 	  var bbParent = parent.getBBox();
 	  startPoint.x += bbParent.x + bbParent.width + 10;
 	}
 		
-	var ideaBar = this.rect(startPoint.x,startPoint.y,200,20,0).attr("fill-opacity",.2).attr("fill", "#f00").attr("stroke", "#000").attr("stroke-width", 3).drag(move,dragger,up);
-	var ideaMain = this.rect(startPoint.x,startPoint.y+20,200,100,0).attr("fill", "#fff").attr("stroke", "#000").attr("stroke-width", 3);
+	var ideaBar = this.rect(startPoint.x,startPoint.y,200,20,0)
+	  .attr({"fill":"#c00", "stroke":"#000", "stroke-width":3})
+	  .drag(move,dragger,up);
+	var ideaMain = this.rect(startPoint.x,startPoint.y+20,200,50,0)
+	  .attr({"fill":"#fff", "stroke":"#000", "stroke-width":3});
 	ideaBar.mainBody = ideaMain;
 
 	anIdea.push( ideaBar, ideaMain );
 	
+	//if there is a parent, add a line to a parent
 	if(parent){
 	  var bbIdea = anIdea.getBBox(), bbParent = parent.getBBox();
 	  var centerIdea = {x:bbIdea.x+bbIdea.width/2, y:bbIdea.y+bbIdea.height/2},
 	    centerParent = {x:bbParent.x+bbParent.width/2, y:bbParent.y+bbParent.height/2};
 	  var path = ["M", centerParent.x, centerParent.y, "L", centerIdea.x, centerIdea.y].join(',');
-	  var line = this.path(path).attr({stroke: "#000", fill: "none", "stroke-width": 3}).toBack();
+	  var line = this.path(path)
+	    .attr({stroke: "#000", fill: "none", "stroke-width": 3})
+	    .toBack();
 	  
-	  parent.childrenLine = line;
+	  if(!parent.childrenLines){
+	    parent.childrenLines = [];
+	  }
+	  parent.childrenLines.push(line);
 	  ideaBar.parentLine = line;
 	}
 	
@@ -81,10 +99,11 @@ Raphael.fn.newIdea = function(parent){
 };
 
 window.onload = function(){
-	var paper = Raphael(10, 50, 800, 400);
+	var paper = Raphael(0, 0, 1000, 600);
 	
 	var firstE = paper.newIdea();
 	var secondE = paper.newIdea(firstE);
+	paper.newIdea(firstE);
 	paper.newIdea(secondE);
 };
 </script>
