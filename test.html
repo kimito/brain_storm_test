@@ -7,18 +7,11 @@
 <script>
 Raphael.fn.newIdea = function(parent){
 	var dragger = function () {
-		this.ox = this.type == "rect" ? this.attr("x") : this.attr("cx");
-		this.oy = this.type == "rect" ? this.attr("y") : this.attr("cy");
-		this.mainBody.ox = this.type == "rect" ? this.mainBody.attr("x") : this.mainBody.attr("cx");
-		this.mainBody.oy = this.type == "rect" ? this.mainBody.attr("y") : this.mainBody.attr("cy");
-
 		this.animate({"fill-opacity": .5}, 100);
 	},
 	move = function (dx, dy) {
-		var att = this.type == "rect" ? {x: this.ox + dx, y: this.oy + dy} : {cx: this.ox + dx, cy: this.oy + dy};
-		this.attr(att);
-		att = this.type == "rect" ? {x: this.mainBody.ox + dx, y: this.mainBody.oy + dy} : {cx: this.mainBody.ox + dx, cy: this.mainBody.oy + dy};
-		this.mainBody.attr(att);
+		var translate = 'T'+dx+','+dy;
+		this.anIdea.transform(translate);
 		
 		//if there is a parent in this idea, move a line to a parent
 		if(this.parentLine){
@@ -50,12 +43,20 @@ Raphael.fn.newIdea = function(parent){
 		}
 
 		this.toFront();
-		this.mainBody.toFront();
+		this.anIdea.member["body"].toFront();
 		
 		this.paper.safari();
 	},
 	up = function () {
+		for(var key in this.anIdea.member){
+			var elm = this.anIdea.member[key],
+			  matrix = elm.matrix.split();
+			
+			elm.attr({x:parseInt(elm.attr('x'))+matrix.dx, y:parseInt(elm.attr('y'))+matrix.dy})
+			  .transform("");
+		}
 		this.animate({"fill-opacity": 1}, 100);
+		this.anIdea.member.add.toFront();
 	};
 	
 	var anIdea = this.set();
@@ -65,6 +66,7 @@ Raphael.fn.newIdea = function(parent){
 	if(parent){
 	  var bbParent = parent.getBBox();
 	  startPoint.x += bbParent.x + bbParent.width + 10;
+	  startPoint.y = bbParent.y;
 	}
 		
 	var ideaBar = this.rect(startPoint.x,startPoint.y,200,20,0)
@@ -73,10 +75,10 @@ Raphael.fn.newIdea = function(parent){
 	var ideaMain = this.rect(startPoint.x,startPoint.y+20,200,50,0)
 	  .attr({"fill":"#fff", "stroke":"#000", "stroke-width":3});
 	var addIdea = this.rect(startPoint.x+180, startPoint.y, 20, 20, 0)
-	  .attr({"fill":"#c88", "stroke-width":3});
+	  .attr({"fill":"#c88", "stroke-width":3})
+	  .click(function(){this.paper.newIdea(this.anIdea)});
 	
-	ideaBar.mainBody = ideaMain;
-	ideaBar.addIdea = addIdea;
+	anIdea.member = {body:ideaMain, add:addIdea, bar:ideaBar};
 	anIdea.push( ideaBar, ideaMain, addIdea);
 	
 	//if there is a parent, add a line to a parent
@@ -97,17 +99,19 @@ Raphael.fn.newIdea = function(parent){
 	}
 	
 	ideaBar.anIdea = anIdea;
+	addIdea.anIdea = anIdea;
 	
 	return anIdea;
 };
 
 window.onload = function(){
-	var paper = Raphael(0, 0, 1000, 600);
+	var paper = Raphael(0, 0, 1400, 800);
 	
 	var firstE = paper.newIdea();
-	var secondE = paper.newIdea(firstE);
+/*	var secondE = paper.newIdea(firstE);
 	paper.newIdea(firstE);
 	paper.newIdea(secondE);
+	*/
 };
 </script>
 </head>
